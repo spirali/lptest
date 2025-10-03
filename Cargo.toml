@@ -1,0 +1,10 @@
+[package]
+name = "lptest"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+microlp = "*"
+good_lp = { version = "1.14", default-features = false, features = ["microlp", "highs"]}
+clap = {  version = "4.5", features = ["derive"] }
+rand = "0.9"

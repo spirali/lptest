@@ -14,11 +14,21 @@ pub fn solve(state: &State, solver: impl Solver) -> Option<HqSolution> {
         .groups
         .iter()
         .map(|g| {
+            let rf = g.request.fractions;
             g.free
                 .iter()
-                .map(|_| {
+                .map(|free| {
                     let v = variables.add(variable().binary());
-                    obj.add_mul(-1024, v);
+                    if rf == 0 {
+                        obj.add_mul(-1024.0 - (free.units as f64 / 32.0), v);
+                    } else {
+                        let f = free.fractions;
+                        if f >= rf {
+                            obj.add_mul(-1024.0 - (f as f64 / 10_000.0 / 16.0), v);
+                        } else {
+                            obj.add_mul(-1024.0, v);
+                        }
+                    }
                     v
                 })
                 .collect()
@@ -38,11 +48,26 @@ pub fn solve(state: &State, solver: impl Solver) -> Option<HqSolution> {
     let mut p = variables.maximise(&obj).using(solver);
 
     for (group, vars) in state.groups.iter().zip(gvars.iter()) {
-        let mut cst: Expression = 0.into();
-        for (c, v) in group.free.iter().zip(vars.iter()) {
-            cst.add_mul(c.units as f64, *v);
+        if group.request.units > 0 {
+            let mut cst: Expression = 0.into();
+            for (c, v) in group.free.iter().zip(vars.iter()) {
+                cst.add_mul(c.units as f64, *v);
+            }
+            p.add_constraint(constraint!(cst >= group.request.units as f64));
         }
-        p.add_constraint(constraint!(cst >= group.request.units as f64));
+        let rf = group.request.fractions;
+        if rf > 0 {
+            let mut cst: Expression = 0.into();
+            for (c, v) in group.free.iter().zip(vars.iter()) {
+                let units = if c.fractions >= rf {
+                    c.units + 1
+                } else {
+                    c.units
+                };
+                cst.add_mul(units as f64, *v);
+            }
+            p.add_constraint(constraint!(cst >= (group.request.units + 1) as f64));
+        }
     }
 
     for (conn, conn_var) in state.connections.iter().zip(conn_vars.iter()) {

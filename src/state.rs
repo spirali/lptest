@@ -515,7 +515,13 @@ pub fn create_random_18_18(seed: u64, p: f64) -> State {
     for i in 0..18 {
         for j in 0..i {
             if rng.random_bool(p) {
-                connections.push(Connection::new(0, i, 1, j, 64.0 * rng.random_range(1..6) as f64))
+                connections.push(Connection::new(
+                    0,
+                    i,
+                    1,
+                    j,
+                    64.0 * rng.random_range(1..6) as f64,
+                ))
             }
         }
     }
@@ -534,6 +540,81 @@ pub fn create_random_18_18(seed: u64, p: f64) -> State {
                 request: Amount::new_u(12),
             },
         ],
-        connections
+        connections,
     }
 }
+
+
+pub fn create_empty_f_16() -> State {
+    State {
+        groups: vec![Group {
+            free: vec![Amount::new_u(24); 8],
+            request: Amount::new(100, 500),
+        }],
+        connections: Vec::new(),
+    }
+}
+
+pub fn create_fractions_16() -> State {
+    State {
+        groups: vec![Group {
+            free: vec![
+                Amount::new(2, 5000), // 0
+                Amount::new(1, 0),
+                Amount::new(2, 5500),
+                Amount::new(1, 2500),
+                Amount::new(1, 3000), // 4
+                Amount::new(0, 3600),
+                Amount::new(8, 0),
+                Amount::new(1, 6500),
+                Amount::new(2, 5000), // 8
+                Amount::new(1, 0),
+                Amount::new(2, 9000),
+                Amount::new(1, 2500),
+                Amount::new(1, 3000), // 12
+                Amount::new(0, 3500),
+                Amount::new(0, 9500),
+                Amount::new(1, 4500),
+
+            ],
+            request: Amount::new(12, 3500),
+        }],
+        connections: Vec::new(),
+    }
+}
+
+pub fn create_random_f_18_18(seed: u64, p: f64) -> State {
+    let mut rng = StdRng::seed_from_u64(seed);
+    let mut connections = Vec::new();
+    for i in 0..18 {
+        for j in 0..i {
+            if rng.random_bool(p) {
+                connections.push(Connection::new(
+                    0,
+                    i,
+                    1,
+                    j,
+                    64.0 * rng.random_range(1..6) as f64,
+                ))
+            }
+        }
+    }
+    State {
+        groups: vec![
+            Group {
+                free: (0..18)
+                    .map(|i| Amount::new(rng.random_range(1..=4), rng.random_range(0..10_000)))
+                    .collect(),
+                request: Amount::new(12, 4999),
+            },
+            Group {
+                free: (0..18)
+                    .map(|i| Amount::new_u(rng.random_range(1..=4)))
+                    .collect(),
+                request: Amount::new(12, 6010),
+            },
+        ],
+        connections,
+    }
+}
+
